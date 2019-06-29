@@ -1,0 +1,9 @@
+1.2.2 / June 29, 2019
+[Alexandr Topilski]
+- Device count check
+- Subscribers
+- User agent
+- Data statistics in bytes, time in seconds
+- Stabilization
+- Stabilization
+- Avformat streams
