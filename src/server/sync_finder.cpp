@@ -30,7 +30,12 @@ common::Error SyncFinder::FindUser(const fastotv::commands_info::AuthInfo& user,
     return common::make_error("User not found");
   }
 
-  *uinf = it->second;
+  user_t founded_user = it->second;
+  if (user.GetPassword() != founded_user.GetPassword()) {
+    return common::make_error("Invalid password");
+  }
+
+  *uinf = founded_user;
   return common::Error();
 }
 
