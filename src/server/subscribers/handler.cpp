@@ -21,13 +21,11 @@
 #include <common/libev/io_loop.h>  // for IoLoop
 
 #include <fastotv/commands/commands.h>
+#include <fastotv/server/commands_factory.h>
+
 #include <fastotv/commands_info/client_info.h>
-#include <fastotv/commands_info/ping_info.h>
-#include <fastotv/commands_info/runtime_channel_info.h>
-#include <fastotv/commands_info/server_info.h>
 
 #include "server/subscribers/client.h"
-#include "server/subscribers/commands.h"
 #include "server/subscribers/commands_info/user_info.h"
 #include "server/subscribers/isubscribe_finder.h"
 
@@ -69,14 +67,13 @@ void SubscribersHandler::TimerEmited(common::libev::IoLoop* server, common::libe
       common::libev::IoClient* client = online_clients[i];
       ProtocoledSubscriberClient* iclient = static_cast<ProtocoledSubscriberClient*>(client);
       if (iclient) {
-        std::string ping_server_json;
-        fastotv::commands_info::ServerPingInfo server_ping_info;
-        common::Error err_ser = server_ping_info.SerializeToString(&ping_server_json);
+        fastotv::commands_info::ClientPingInfo client_ping_info;
+        fastotv::protocol::request_t ping_request;
+        common::Error err_ser = fastotv::server::PingRequest(NextRequestID(), client_ping_info, &ping_request);
         if (err_ser) {
           continue;
         }
 
-        const fastotv::protocol::request_t ping_request = PingRequest(NextRequestID(), ping_server_json);
         common::ErrnoError err = iclient->WriteRequest(ping_request);
         if (err) {
           DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -229,14 +226,24 @@ common::ErrnoError SubscribersHandler::HandleRequestClientActivate(ProtocoledSub
     json_object_put(jauth);
     if (err_des) {
       const std::string error_str = err_des->GetDescription();
-      fastotv::protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      fastotv::protocol::response_t resp;
+      common::Error err_ser = fastotv::server::ActivateResponseFail(req->id, error_str, &resp);
+      if (err_ser) {
+        return common::make_errno_error_inval();
+      }
+
       client->WriteResponce(resp);
       return common::make_errno_error(error_str, EINVAL);
     }
 
     if (!uauth.IsValid()) {
       const std::string error_str = "Invalid user";
-      fastotv::protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      fastotv::protocol::response_t resp;
+      common::Error err_ser = fastotv::server::ActivateResponseFail(req->id, error_str, &resp);
+      if (err_ser) {
+        return common::make_errno_error_inval();
+      }
+
       client->WriteResponce(resp);
       return common::make_errno_error(error_str, EINVAL);
     }
@@ -245,14 +252,24 @@ common::ErrnoError SubscribersHandler::HandleRequestClientActivate(ProtocoledSub
     common::Error err_find = finder_->FindUser(uauth, &registered_user);
     if (err_find) {
       const std::string error_str = err_find->GetDescription();
-      fastotv::protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      fastotv::protocol::response_t resp;
+      common::Error err_ser = fastotv::server::ActivateResponseFail(req->id, error_str, &resp);
+      if (err_ser) {
+        return common::make_errno_error_inval();
+      }
+
       client->WriteResponce(resp);
       return common::make_errno_error(error_str, EINVAL);
     }
 
     if (registered_user.IsBanned()) {
       const std::string error_str = "Banned user";
-      fastotv::protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      fastotv::protocol::response_t resp;
+      common::Error err_ser = fastotv::server::ActivateResponseFail(req->id, error_str, &resp);
+      if (err_ser) {
+        return common::make_errno_error_inval();
+      }
+
       client->WriteResponce(resp);
       return common::make_errno_error(error_str, EINVAL);
     }
@@ -262,7 +279,12 @@ common::ErrnoError SubscribersHandler::HandleRequestClientActivate(ProtocoledSub
     common::Error dev_find = registered_user.FindDevice(did, &dev);
     if (dev_find) {
       const std::string error_str = dev_find->GetDescription();
-      fastotv::protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      fastotv::protocol::response_t resp;
+      common::Error err_ser = fastotv::server::ActivateResponseFail(req->id, error_str, &resp);
+      if (err_ser) {
+        return common::make_errno_error_inval();
+      }
+
       client->WriteResponce(resp);
       return common::make_errno_error(error_str, EINVAL);
     }
@@ -272,12 +294,22 @@ common::ErrnoError SubscribersHandler::HandleRequestClientActivate(ProtocoledSub
     auto fconnections = FindInnerConnectionsByUser(user_rpc);
     if (fconnections.size() >= dev.GetConnections()) {
       const std::string error_str = "Limit connection reject";
-      fastotv::protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      fastotv::protocol::response_t resp;
+      common::Error err_ser = fastotv::server::ActivateResponseFail(req->id, error_str, &resp);
+      if (err_ser) {
+        return common::make_errno_error_inval();
+      }
+
       client->WriteResponce(resp);
       return common::make_errno_error(error_str, EINVAL);
     }
 
-    const fastotv::protocol::response_t resp = ActivateResponseSuccess(req->id);
+    fastotv::protocol::response_t resp;
+    common::Error err_ser = fastotv::server::ActivateResponseSuccess(req->id, &resp);
+    if (err_ser) {
+      return common::make_errno_error_inval();
+    }
+
     common::ErrnoError errn = client->WriteResponce(resp);
     if (errn) {
       return errn;
@@ -310,14 +342,13 @@ common::ErrnoError SubscribersHandler::HandleRequestClientPing(ProtocoledSubscri
     }
 
     fastotv::commands_info::ServerPingInfo server_ping_info;
-    std::string server_ping_info_str;
-    common::Error err_ser = server_ping_info.SerializeToString(&server_ping_info_str);
+    fastotv::protocol::response_t resp;
+    common::Error err_ser = fastotv::server::PingResponseSuccess(req->id, server_ping_info, &resp);
     if (err_ser) {
       const std::string err_str = err_ser->GetDescription();
       return common::make_errno_error(err_str, EAGAIN);
     }
 
-    fastotv::protocol::response_t resp = PingResponseSuccess(req->id, server_ping_info_str);
     return client->WriteResponce(resp);
   }
 
@@ -330,23 +361,26 @@ common::ErrnoError SubscribersHandler::HandleRequestClientGetServerInfo(Protocol
   subscribers::commands_info::UserInfo user;
   common::Error err = finder_->FindUser(hinf, &user);
   if (err) {
-    const fastotv::protocol::response_t resp = GetServerInfoResponceFail(req->id, err->GetDescription());
+    const std::string err_str = err->GetDescription();
+    fastotv::protocol::response_t resp;
+    common::Error err_ser = fastotv::server::GetServerInfoResponceFail(req->id, err_str, &resp);
+    if (err_ser) {
+      return common::make_errno_error(err_ser->GetDescription(), EAGAIN);
+    }
     ignore_result(client->WriteResponce(resp));
     ignore_result(client->Close());
     delete client;
-    const std::string err_str = err->GetDescription();
     return common::make_errno_error(err_str, EAGAIN);
   }
 
   fastotv::commands_info::ServerInfo serv(bandwidth_host_);
-  std::string server_info_str;
-  common::Error err_ser = serv.SerializeToString(&server_info_str);
+  fastotv::protocol::response_t server_info_responce;
+  common::Error err_ser = fastotv::server::GetServerInfoResponceSuccsess(req->id, serv, &server_info_responce);
   if (err_ser) {
     const std::string err_str = err_ser->GetDescription();
     return common::make_errno_error(err_str, EAGAIN);
   }
 
-  const fastotv::protocol::response_t server_info_responce = GetServerInfoResponceSuccsess(req->id, server_info_str);
   return client->WriteResponce(server_info_responce);
 }
 
@@ -357,22 +391,25 @@ common::ErrnoError SubscribersHandler::HandleRequestClientGetChannels(Protocoled
   common::Error err = finder_->FindUser(hinf, &user);
   if (err) {
     const std::string err_str = err->GetDescription();
-    const fastotv::protocol::response_t resp = GetServerInfoResponceFail(req->id, err_str);
+    fastotv::protocol::response_t resp;
+    common::Error err_ser = fastotv::server::GetChannelsResponceFail(req->id, err_str, &resp);
+    if (err_ser) {
+      return common::make_errno_error(err_ser->GetDescription(), EAGAIN);
+    }
     ignore_result(client->WriteResponce(resp));
     ignore_result(client->Close());
     delete client;
     return common::make_errno_error(err_str, EAGAIN);
   }
 
-  std::string channels_str;
   fastotv::commands_info::ChannelsInfo chan = user.GetChannelInfo();
-  common::Error err_ser = chan.SerializeToString(&channels_str);
+  fastotv::protocol::response_t channels_responce;
+  common::Error err_ser = fastotv::server::GetChannelsResponceSuccsess(req->id, chan, &channels_responce);
   if (err_ser) {
     const std::string err_str = err_ser->GetDescription();
     return common::make_errno_error(err_str, EAGAIN);
   }
 
-  const fastotv::protocol::response_t channels_responce = GetChannelsResponceSuccsess(req->id, channels_str);
   return client->WriteResponce(channels_responce);
 }
 
@@ -400,21 +437,14 @@ common::ErrnoError SubscribersHandler::HandleRequestClientGetRuntimeChannelInfo(
     client->SetCurrentStreamID(sid);                         // add to watcher
 
     fastotv::commands_info::RuntimeChannelInfo rinf(sid, watchers);
-    std::string rchannel_str;
-    common::Error err_ser = rinf.SerializeToString(&rchannel_str);
+    fastotv::protocol::response_t channels_responce;
+    common::Error err_ser = fastotv::server::GetRuntimeChannelInfoResponceSuccsess(req->id, rinf, &channels_responce);
     if (err_ser) {
       const std::string err_str = err_ser->GetDescription();
       return common::make_errno_error(err_str, EAGAIN);
     }
 
-    const fastotv::protocol::response_t channels_responce =
-        GetRuntimeChannelInfoResponceSuccsess(req->id, rchannel_str);
-    common::ErrnoError err = client->WriteResponce(channels_responce);
-    if (err) {
-      return err;
-    }
-
-    return common::ErrnoError();
+    return client->WriteResponce(channels_responce);
   }
 
   return common::make_errno_error_inval();

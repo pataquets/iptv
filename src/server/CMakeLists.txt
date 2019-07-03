@@ -64,7 +64,6 @@ SET(SERVER_SUBSCRIBERS_HEADERS
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/handler.h
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/client.h
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/server.h
-  ${CMAKE_SOURCE_DIR}/src/server/subscribers/commands.h
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/server_auth_info.h
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/commands_info/user_info.h
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/isubscribe_finder.h
@@ -75,7 +74,6 @@ SET(SERVER_SUBSCRIBERS_SOURCES
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/handler.cpp
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/client.cpp
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/server.cpp
-  ${CMAKE_SOURCE_DIR}/src/server/subscribers/commands.cpp
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/server_auth_info.cpp
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/commands_info/user_info.cpp
   ${CMAKE_SOURCE_DIR}/src/server/subscribers/isubscribe_finder.cpp
