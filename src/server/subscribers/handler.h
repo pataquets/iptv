@@ -31,6 +31,7 @@
 #include <fastotv/protocol/types.h>
 
 #include "server/base/iserver_handler.h"
+#include "server/subscribers/commands_info/user_info.h"
 #include "server/subscribers/rpc/user_rpc_info.h"
 
 namespace iptv_cloud {
@@ -76,8 +77,6 @@ class SubscribersHandler : public base::IServerHandler {
   common::Error UnRegisterInnerConnectionByHost(ProtocoledSubscriberClient* client) WARN_UNUSED_RESULT;
   std::vector<ProtocoledSubscriberClient*> FindInnerConnectionsByUser(const rpc::UserRpcInfo& user) const;
 
-  fastotv::protocol::sequance_id_t NextRequestID();
-
   common::ErrnoError HandleInnerDataReceived(ProtocoledSubscriberClient* client, const std::string& input_command);
   common::ErrnoError HandleRequestCommand(ProtocoledSubscriberClient* client, fastotv::protocol::request_t* req);
   common::ErrnoError HandleResponceCommand(ProtocoledSubscriberClient* client, fastotv::protocol::response_t* resp);
@@ -95,10 +94,11 @@ class SubscribersHandler : public base::IServerHandler {
   common::ErrnoError HandleResponceServerGetClientInfo(ProtocoledSubscriberClient* client,
                                                        fastotv::protocol::response_t* resp);
 
-  size_t GetOnlineUserByStreamID(common::libev::IoLoop* server, fastotv::stream_id sid) const;
+  size_t GetAndUpdateOnlineUserByStreamID(common::libev::IoLoop* server, fastotv::stream_id sid) const;
+  common::Error CheckIsAuthClient(ProtocoledSubscriberClient* client,
+                                  subscribers::commands_info::UserInfo* user) const WARN_UNUSED_RESULT;
 
   ISubscribeFinder* finder_;
-  std::atomic<fastotv::protocol::seq_id_t> id_;
   common::libev::timer_id_t ping_client_id_timer_;
   const common::net::HostAndPort bandwidth_host_;
   inner_connections_t connections_;
