@@ -445,7 +445,7 @@ common::ErrnoError StreamController::HandleRequestStopStream(common::libev::IoCl
   CHECK(loop_->IsLoopThread());
   protocol::protocol_client_t* pclient = static_cast<protocol::protocol_client_t*>(client);
   protocol::response_t resp = StopStreamResponceSuccess(req->id);
-  pclient->WriteResponce(resp);
+  pclient->WriteResponse(resp);
   Stop();
   return common::ErrnoError();
 }
@@ -455,7 +455,7 @@ common::ErrnoError StreamController::HandleRequestRestartStream(common::libev::I
   CHECK(loop_->IsLoopThread());
   protocol::protocol_client_t* pclient = static_cast<protocol::protocol_client_t*>(client);
   protocol::response_t resp = RestartStreamResponceSuccess(req->id);
-  pclient->WriteResponce(resp);
+  pclient->WriteResponse(resp);
   Restart();
   return common::ErrnoError();
 }

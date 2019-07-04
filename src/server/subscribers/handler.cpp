@@ -128,8 +128,7 @@ void SubscribersHandler::DataReadyToWrite(common::libev::IoClient* client) {
   base_class::DataReadyToWrite(client);
 }
 
-common::Error SubscribersHandler::RegisterInnerConnectionByHost(const ServerAuthInfo& info,
-                                                                SubscriberClient* client) {
+common::Error SubscribersHandler::RegisterInnerConnectionByHost(const ServerAuthInfo& info, SubscriberClient* client) {
   CHECK(info.IsValid());
   if (!client) {
     DNOTREACHED();
@@ -170,8 +169,7 @@ common::Error SubscribersHandler::UnRegisterInnerConnectionByHost(SubscriberClie
   return common::Error();
 }
 
-std::vector<SubscriberClient*> SubscribersHandler::FindInnerConnectionsByUser(
-    const rpc::UserRpcInfo& user) const {
+std::vector<SubscriberClient*> SubscribersHandler::FindInnerConnectionsByUser(const rpc::UserRpcInfo& user) const {
   const auto hs = connections_.find(user.GetUserID());
   if (hs == connections_.end()) {
     return std::vector<SubscriberClient*>();

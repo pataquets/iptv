@@ -72,8 +72,7 @@ class SubscribersHandler : public base::IServerHandler {
   virtual ~SubscribersHandler();
 
  private:
-  common::Error RegisterInnerConnectionByHost(const ServerAuthInfo& info,
-                                              SubscriberClient* client) WARN_UNUSED_RESULT;
+  common::Error RegisterInnerConnectionByHost(const ServerAuthInfo& info, SubscriberClient* client) WARN_UNUSED_RESULT;
   common::Error UnRegisterInnerConnectionByHost(SubscriberClient* client) WARN_UNUSED_RESULT;
   std::vector<SubscriberClient*> FindInnerConnectionsByUser(const rpc::UserRpcInfo& user) const;
 
@@ -83,16 +82,13 @@ class SubscribersHandler : public base::IServerHandler {
 
   common::ErrnoError HandleRequestClientActivate(SubscriberClient* client, fastotv::protocol::request_t* req);
   common::ErrnoError HandleRequestClientPing(SubscriberClient* client, fastotv::protocol::request_t* req);
-  common::ErrnoError HandleRequestClientGetServerInfo(SubscriberClient* client,
-                                                      fastotv::protocol::request_t* req);
-  common::ErrnoError HandleRequestClientGetChannels(SubscriberClient* client,
-                                                    fastotv::protocol::request_t* req);
+  common::ErrnoError HandleRequestClientGetServerInfo(SubscriberClient* client, fastotv::protocol::request_t* req);
+  common::ErrnoError HandleRequestClientGetChannels(SubscriberClient* client, fastotv::protocol::request_t* req);
   common::ErrnoError HandleRequestClientGetRuntimeChannelInfo(SubscriberClient* client,
                                                               fastotv::protocol::request_t* req);
 
   common::ErrnoError HandleResponceServerPing(SubscriberClient* client, fastotv::protocol::response_t* resp);
-  common::ErrnoError HandleResponceServerGetClientInfo(SubscriberClient* client,
-                                                       fastotv::protocol::response_t* resp);
+  common::ErrnoError HandleResponceServerGetClientInfo(SubscriberClient* client, fastotv::protocol::response_t* resp);
 
   size_t GetAndUpdateOnlineUserByStreamID(common::libev::IoLoop* server, fastotv::stream_id sid) const;
   common::Error CheckIsAuthClient(SubscriberClient* client,

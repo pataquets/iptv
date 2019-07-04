@@ -800,7 +800,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientStopService(Protocole
     if (quit_cleanup_timer_ != INVALID_TIMER_ID) {
       // in progress
       protocol::response_t resp = StopServiceResponceFail(req->id, "Stop service in progress...");
-      dclient->WriteResponce(resp);
+      dclient->WriteResponse(resp);
 
       return common::ErrnoError();
     }
@@ -812,7 +812,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientStopService(Protocole
     }
 
     protocol::response_t resp = StopServiceResponceSuccess(req->id);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
 
     quit_cleanup_timer_ = loop_->CreateTimer(cleanup_seconds, false);
     return common::ErrnoError();
@@ -1040,12 +1040,12 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientStartStream(Protocole
     common::ErrnoError err = CreateChildStream(start_info.GetConfig());
     if (err) {
       protocol::response_t resp = StartStreamResponceFail(req->id, err->GetDescription());
-      dclient->WriteResponce(resp);
+      dclient->WriteResponse(resp);
       return err;
     }
 
     protocol::response_t resp = StartStreamResponceSuccess(req->id);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
@@ -1082,13 +1082,13 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientStopStream(Protocoled
     Child* chan = FindChildByID(stop_info.GetStreamID());
     if (!chan) {
       protocol::response_t resp = StopStreamResponceFail(req->id, "Stream not found.");
-      dclient->WriteResponce(resp);
+      dclient->WriteResponse(resp);
       return common::ErrnoError();
     }
 
     chan->SendStop(NextRequestID());
     protocol::response_t resp = StopStreamResponceSuccess(req->id);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
@@ -1120,13 +1120,13 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientRestartStream(Protoco
     Child* chan = FindChildByID(restart_info.GetStreamID());
     if (!chan) {
       protocol::response_t resp = RestartStreamResponceFail(req->id, "Stream not found.");
-      dclient->WriteResponce(resp);
+      dclient->WriteResponse(resp);
       return common::ErrnoError();
     }
 
     chan->SendRestart(NextRequestID());
     protocol::response_t resp = RestartStreamResponceSuccess(req->id);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
@@ -1164,7 +1164,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientGetLogStream(Protocol
     } else if (remote_log_path.GetScheme() == common::uri::Url::https) {
     }
     protocol::response_t resp = GetLogStreamResponceSuccess(req->id);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
@@ -1202,7 +1202,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientGetPipelineStream(Pro
     } else if (remote_log_path.GetScheme() == common::uri::Url::https) {
     }
     protocol::response_t resp = GetLogStreamResponceSuccess(req->id);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
@@ -1240,7 +1240,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientPrepareService(Protoc
     service::Directories dirs(state_info);
     std::string resp_str = service::MakeDirectoryResponce(dirs);
     protocol::response_t resp = StateServiceResponce(req->id, resp_str);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
@@ -1287,7 +1287,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientSyncService(Protocole
     }
 
     protocol::response_t resp = StopStreamResponceSuccess(req->id);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
@@ -1336,20 +1336,20 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientActivate(ProtocoledDa
     if (err_des) {
       const std::string err_str = err_des->GetDescription();
       protocol::response_t resp = ActivateResponceFail(req->id, err_str);
-      dclient->WriteResponce(resp);
+      dclient->WriteResponse(resp);
       return common::make_errno_error(err_str, EAGAIN);
     }
 
     bool is_active = activate_info.GetLicense() == license_key_;
     if (!is_active) {
       protocol::response_t resp = ActivateResponceFail(req->id, "Wrong license key");
-      dclient->WriteResponce(resp);
+      dclient->WriteResponse(resp);
       return common::make_errno_error_inval();
     }
 
     const std::string node_stats = MakeServiceStats(true);
     protocol::response_t resp = ActivateResponce(req->id, node_stats);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     dclient->SetVerified(true);
     return common::ErrnoError();
   }
@@ -1388,7 +1388,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientPingService(Protocole
     }
 
     protocol::response_t resp = PingServiceResponce(req->id, ping_server_json);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
@@ -1424,7 +1424,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientGetLogService(Protoco
     }
 
     protocol::response_t resp = GetLogServiceResponceSuccess(req->id);
-    dclient->WriteResponce(resp);
+    dclient->WriteResponse(resp);
     return common::ErrnoError();
   }
 
