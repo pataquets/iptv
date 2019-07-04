@@ -62,7 +62,7 @@ void SubscribersHandler::TimerEmited(common::libev::IoLoop* server, common::libe
     std::vector<common::libev::IoClient*> online_clients = server->GetClients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
       common::libev::IoClient* client = online_clients[i];
-      ProtocoledSubscriberClient* iclient = static_cast<ProtocoledSubscriberClient*>(client);
+      SubscriberClient* iclient = static_cast<SubscriberClient*>(client);
       if (iclient) {
         common::ErrnoError err = iclient->Ping();
         if (err) {
@@ -98,7 +98,7 @@ void SubscribersHandler::Accepted(common::libev::IoClient* client) {
 }
 
 void SubscribersHandler::Closed(common::libev::IoClient* client) {
-  ProtocoledSubscriberClient* iclient = static_cast<ProtocoledSubscriberClient*>(client);
+  SubscriberClient* iclient = static_cast<SubscriberClient*>(client);
   const ServerAuthInfo server_user_auth = iclient->GetServerHostInfo();
   common::Error unreg_err = UnRegisterInnerConnectionByHost(iclient);
   if (unreg_err) {
@@ -111,7 +111,7 @@ void SubscribersHandler::Closed(common::libev::IoClient* client) {
 
 void SubscribersHandler::DataReceived(common::libev::IoClient* client) {
   std::string buff;
-  ProtocoledSubscriberClient* iclient = static_cast<ProtocoledSubscriberClient*>(client);
+  SubscriberClient* iclient = static_cast<SubscriberClient*>(client);
   common::ErrnoError err = iclient->ReadCommand(&buff);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -129,7 +129,7 @@ void SubscribersHandler::DataReadyToWrite(common::libev::IoClient* client) {
 }
 
 common::Error SubscribersHandler::RegisterInnerConnectionByHost(const ServerAuthInfo& info,
-                                                                ProtocoledSubscriberClient* client) {
+                                                                SubscriberClient* client) {
   CHECK(info.IsValid());
   if (!client) {
     DNOTREACHED();
@@ -141,7 +141,7 @@ common::Error SubscribersHandler::RegisterInnerConnectionByHost(const ServerAuth
   return common::Error();
 }
 
-common::Error SubscribersHandler::UnRegisterInnerConnectionByHost(ProtocoledSubscriberClient* client) {
+common::Error SubscribersHandler::UnRegisterInnerConnectionByHost(SubscriberClient* client) {
   if (!client) {
     DNOTREACHED();
     return common::make_error_inval();
@@ -170,14 +170,14 @@ common::Error SubscribersHandler::UnRegisterInnerConnectionByHost(ProtocoledSubs
   return common::Error();
 }
 
-std::vector<ProtocoledSubscriberClient*> SubscribersHandler::FindInnerConnectionsByUser(
+std::vector<SubscriberClient*> SubscribersHandler::FindInnerConnectionsByUser(
     const rpc::UserRpcInfo& user) const {
   const auto hs = connections_.find(user.GetUserID());
   if (hs == connections_.end()) {
-    return std::vector<ProtocoledSubscriberClient*>();
+    return std::vector<SubscriberClient*>();
   }
 
-  std::vector<ProtocoledSubscriberClient*> result;
+  std::vector<SubscriberClient*> result;
   auto devices = hs->second;
   for (client_t* connected_device : devices) {
     auto uinf = connected_device->GetServerHostInfo();
@@ -194,7 +194,7 @@ size_t SubscribersHandler::GetAndUpdateOnlineUserByStreamID(common::libev::IoLoo
   std::vector<common::libev::IoClient*> online_clients = server->GetClients();
   for (size_t i = 0; i < online_clients.size(); ++i) {
     common::libev::IoClient* client = online_clients[i];
-    ProtocoledSubscriberClient* iclient = static_cast<ProtocoledSubscriberClient*>(client);
+    SubscriberClient* iclient = static_cast<SubscriberClient*>(client);
     if (iclient && iclient->GetCurrentStreamID() == sid) {
       total++;
     }
@@ -203,7 +203,7 @@ size_t SubscribersHandler::GetAndUpdateOnlineUserByStreamID(common::libev::IoLoo
   return total;
 }
 
-common::ErrnoError SubscribersHandler::HandleRequestClientActivate(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleRequestClientActivate(SubscriberClient* client,
                                                                    fastotv::protocol::request_t* req) {
   if (req->params) {
     const char* params_ptr = req->params->c_str();
@@ -264,7 +264,7 @@ common::ErrnoError SubscribersHandler::HandleRequestClientActivate(ProtocoledSub
   return common::make_errno_error_inval();
 }
 
-common::ErrnoError SubscribersHandler::HandleRequestClientPing(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleRequestClientPing(SubscriberClient* client,
                                                                fastotv::protocol::request_t* req) {
   subscribers::commands_info::UserInfo user;
   common::Error err = CheckIsAuthClient(client, &user);
@@ -296,7 +296,7 @@ common::ErrnoError SubscribersHandler::HandleRequestClientPing(ProtocoledSubscri
   return common::make_errno_error_inval();
 }
 
-common::ErrnoError SubscribersHandler::HandleRequestClientGetServerInfo(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleRequestClientGetServerInfo(SubscriberClient* client,
                                                                         fastotv::protocol::request_t* req) {
   subscribers::commands_info::UserInfo user;
   common::Error err = CheckIsAuthClient(client, &user);
@@ -310,7 +310,7 @@ common::ErrnoError SubscribersHandler::HandleRequestClientGetServerInfo(Protocol
   return client->GetServerInfoSuccess(req->id, bandwidth_host_);
 }
 
-common::Error SubscribersHandler::CheckIsAuthClient(ProtocoledSubscriberClient* client,
+common::Error SubscribersHandler::CheckIsAuthClient(SubscriberClient* client,
                                                     subscribers::commands_info::UserInfo* user) const {
   if (!user) {
     return common::make_error_inval();
@@ -320,7 +320,7 @@ common::Error SubscribersHandler::CheckIsAuthClient(ProtocoledSubscriberClient* 
   return finder_->FindUser(hinf, user);
 }
 
-common::ErrnoError SubscribersHandler::HandleRequestClientGetChannels(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleRequestClientGetChannels(SubscriberClient* client,
                                                                       fastotv::protocol::request_t* req) {
   subscribers::commands_info::UserInfo user;
   common::Error err = CheckIsAuthClient(client, &user);
@@ -335,7 +335,7 @@ common::ErrnoError SubscribersHandler::HandleRequestClientGetChannels(Protocoled
   return client->GetChannelsSuccess(req->id, chan);
 }
 
-common::ErrnoError SubscribersHandler::HandleRequestClientGetRuntimeChannelInfo(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleRequestClientGetRuntimeChannelInfo(SubscriberClient* client,
                                                                                 fastotv::protocol::request_t* req) {
   subscribers::commands_info::UserInfo user;
   common::Error err = CheckIsAuthClient(client, &user);
@@ -373,7 +373,7 @@ common::ErrnoError SubscribersHandler::HandleRequestClientGetRuntimeChannelInfo(
   return common::make_errno_error_inval();
 }
 
-common::ErrnoError SubscribersHandler::HandleInnerDataReceived(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleInnerDataReceived(SubscriberClient* client,
                                                                const std::string& input_command) {
   fastotv::protocol::request_t* req = nullptr;
   fastotv::protocol::response_t* resp = nullptr;
@@ -405,9 +405,9 @@ common::ErrnoError SubscribersHandler::HandleInnerDataReceived(ProtocoledSubscri
   return common::ErrnoError();
 }
 
-common::ErrnoError SubscribersHandler::HandleRequestCommand(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleRequestCommand(SubscriberClient* client,
                                                             fastotv::protocol::request_t* req) {
-  ProtocoledSubscriberClient* iclient = static_cast<ProtocoledSubscriberClient*>(client);
+  SubscriberClient* iclient = static_cast<SubscriberClient*>(client);
   if (req->method == CLIENT_ACTIVATE) {
     return HandleRequestClientActivate(iclient, req);
   } else if (req->method == CLIENT_PING) {
@@ -424,7 +424,7 @@ common::ErrnoError SubscribersHandler::HandleRequestCommand(ProtocoledSubscriber
   return common::ErrnoError();
 }
 
-common::ErrnoError SubscribersHandler::HandleResponceServerPing(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleResponceServerPing(SubscriberClient* client,
                                                                 fastotv::protocol::response_t* resp) {
   UNUSED(client);
   if (resp->IsMessage()) {
@@ -446,7 +446,7 @@ common::ErrnoError SubscribersHandler::HandleResponceServerPing(ProtocoledSubscr
   return common::ErrnoError();
 }
 
-common::ErrnoError SubscribersHandler::HandleResponceServerGetClientInfo(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleResponceServerGetClientInfo(SubscriberClient* client,
                                                                          fastotv::protocol::response_t* resp) {
   UNUSED(client);
   if (resp->IsMessage()) {
@@ -468,11 +468,11 @@ common::ErrnoError SubscribersHandler::HandleResponceServerGetClientInfo(Protoco
   return common::ErrnoError();
 }
 
-common::ErrnoError SubscribersHandler::HandleResponceCommand(ProtocoledSubscriberClient* client,
+common::ErrnoError SubscribersHandler::HandleResponceCommand(SubscriberClient* client,
                                                              fastotv::protocol::response_t* resp) {
   fastotv::protocol::request_t req;
-  ProtocoledSubscriberClient* sclient = static_cast<ProtocoledSubscriberClient*>(client);
-  ProtocoledSubscriberClient::callback_t cb;
+  SubscriberClient* sclient = static_cast<SubscriberClient*>(client);
+  SubscriberClient::callback_t cb;
   if (sclient->PopRequestByID(resp->id, &req, &cb)) {
     if (cb) {
       cb(resp);

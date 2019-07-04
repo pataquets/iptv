@@ -24,7 +24,7 @@ SubscribersServer::SubscribersServer(const common::net::HostAndPort& host, commo
     : base_class(host, false, observer) {}
 
 common::libev::tcp::TcpClient* SubscribersServer::CreateClient(const common::net::socket_info& info) {
-  return new ProtocoledSubscriberClient(this, info);
+  return new SubscriberClient(this, info);
 }
 
 }  // namespace subscribers

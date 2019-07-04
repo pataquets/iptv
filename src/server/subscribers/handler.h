@@ -38,14 +38,14 @@ namespace iptv_cloud {
 namespace server {
 namespace subscribers {
 
-class ProtocoledSubscriberClient;
+class SubscriberClient;
 class ServerAuthInfo;
 class ISubscribeFinder;
 
 class SubscribersHandler : public base::IServerHandler {
  public:
   typedef base::IServerHandler base_class;
-  typedef ProtocoledSubscriberClient client_t;
+  typedef SubscriberClient client_t;
   typedef std::unordered_map<fastotv::user_id_t, std::vector<client_t*>> inner_connections_t;
   enum {
     ping_timeout_clients = 60  // sec
@@ -73,29 +73,29 @@ class SubscribersHandler : public base::IServerHandler {
 
  private:
   common::Error RegisterInnerConnectionByHost(const ServerAuthInfo& info,
-                                              ProtocoledSubscriberClient* client) WARN_UNUSED_RESULT;
-  common::Error UnRegisterInnerConnectionByHost(ProtocoledSubscriberClient* client) WARN_UNUSED_RESULT;
-  std::vector<ProtocoledSubscriberClient*> FindInnerConnectionsByUser(const rpc::UserRpcInfo& user) const;
+                                              SubscriberClient* client) WARN_UNUSED_RESULT;
+  common::Error UnRegisterInnerConnectionByHost(SubscriberClient* client) WARN_UNUSED_RESULT;
+  std::vector<SubscriberClient*> FindInnerConnectionsByUser(const rpc::UserRpcInfo& user) const;
 
-  common::ErrnoError HandleInnerDataReceived(ProtocoledSubscriberClient* client, const std::string& input_command);
-  common::ErrnoError HandleRequestCommand(ProtocoledSubscriberClient* client, fastotv::protocol::request_t* req);
-  common::ErrnoError HandleResponceCommand(ProtocoledSubscriberClient* client, fastotv::protocol::response_t* resp);
+  common::ErrnoError HandleInnerDataReceived(SubscriberClient* client, const std::string& input_command);
+  common::ErrnoError HandleRequestCommand(SubscriberClient* client, fastotv::protocol::request_t* req);
+  common::ErrnoError HandleResponceCommand(SubscriberClient* client, fastotv::protocol::response_t* resp);
 
-  common::ErrnoError HandleRequestClientActivate(ProtocoledSubscriberClient* client, fastotv::protocol::request_t* req);
-  common::ErrnoError HandleRequestClientPing(ProtocoledSubscriberClient* client, fastotv::protocol::request_t* req);
-  common::ErrnoError HandleRequestClientGetServerInfo(ProtocoledSubscriberClient* client,
+  common::ErrnoError HandleRequestClientActivate(SubscriberClient* client, fastotv::protocol::request_t* req);
+  common::ErrnoError HandleRequestClientPing(SubscriberClient* client, fastotv::protocol::request_t* req);
+  common::ErrnoError HandleRequestClientGetServerInfo(SubscriberClient* client,
                                                       fastotv::protocol::request_t* req);
-  common::ErrnoError HandleRequestClientGetChannels(ProtocoledSubscriberClient* client,
+  common::ErrnoError HandleRequestClientGetChannels(SubscriberClient* client,
                                                     fastotv::protocol::request_t* req);
-  common::ErrnoError HandleRequestClientGetRuntimeChannelInfo(ProtocoledSubscriberClient* client,
+  common::ErrnoError HandleRequestClientGetRuntimeChannelInfo(SubscriberClient* client,
                                                               fastotv::protocol::request_t* req);
 
-  common::ErrnoError HandleResponceServerPing(ProtocoledSubscriberClient* client, fastotv::protocol::response_t* resp);
-  common::ErrnoError HandleResponceServerGetClientInfo(ProtocoledSubscriberClient* client,
+  common::ErrnoError HandleResponceServerPing(SubscriberClient* client, fastotv::protocol::response_t* resp);
+  common::ErrnoError HandleResponceServerGetClientInfo(SubscriberClient* client,
                                                        fastotv::protocol::response_t* resp);
 
   size_t GetAndUpdateOnlineUserByStreamID(common::libev::IoLoop* server, fastotv::stream_id sid) const;
-  common::Error CheckIsAuthClient(ProtocoledSubscriberClient* client,
+  common::Error CheckIsAuthClient(SubscriberClient* client,
                                   subscribers::commands_info::UserInfo* user) const WARN_UNUSED_RESULT;
 
   ISubscribeFinder* finder_;
